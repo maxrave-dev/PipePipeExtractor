@@ -56,6 +56,7 @@ public class ItagItem implements Serializable {
             new ItagItem(249, AUDIO, WEBMA_OPUS, 50),
             new ItagItem(250, AUDIO, WEBMA_OPUS, 70),
             new ItagItem(251, AUDIO, WEBMA_OPUS, 160),
+            new ItagItem(774, AUDIO, WEBMA_OPUS, 256),
 
             /// VIDEO ONLY ////////////////////////////////////////////
             //           ID      Type     Format  Resolution  FPS  ////
