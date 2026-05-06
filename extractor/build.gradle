@@ -38,4 +38,22 @@ dependencies {
     implementation 'org.mozilla:rhino:1.7.13'
 
     checkstyle "com.puppycrawl.tools:checkstyle:$checkstyleVersion"
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test {
+    useJUnitPlatform()
+    // Forward env vars to test JVM
+    environment 'YT_COOKIES', System.getenv('YT_COOKIES') ?: ''
+    environment 'DOWNLOADER_DEBUG', System.getenv('DOWNLOADER_DEBUG') ?: ''
+    environment 'DISABLE_WEB_REMIX', System.getenv('DISABLE_WEB_REMIX') ?: ''
+    // Always re-run, never use cached result
+    outputs.upToDateWhen { false }
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
 }

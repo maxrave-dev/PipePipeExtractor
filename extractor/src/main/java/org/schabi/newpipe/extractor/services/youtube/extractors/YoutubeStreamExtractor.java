@@ -104,6 +104,8 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     private String androidCpn;
     private String iosCpn;
     private String safariCpn;
+    private JsonObject webRemixStreamingData;
+    private String webRemixCpn;
 
     public WatchDataCache watchDataCache;
 
@@ -801,6 +803,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         try {
             // Collect audio streams
             java.util.stream.Stream.of(
+                    new Pair<>(webRemixStreamingData, webRemixCpn),
                     new Pair<>(safariStreamingData, safariCpn),
                     new Pair<>(androidStreamingData, androidCpn),
                     new Pair<>(tvHtml5SimplyEmbedStreamingData, tvHtml5SimplyEmbedCpn)
@@ -813,6 +816,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
 
             // Collect video streams
             java.util.stream.Stream.of(
+                    new Pair<>(webRemixStreamingData, webRemixCpn),
                     new Pair<>(safariStreamingData, safariCpn),
                     new Pair<>(androidStreamingData, androidCpn),
                     new Pair<>(tvHtml5SimplyEmbedStreamingData, tvHtml5SimplyEmbedCpn)
@@ -825,6 +829,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
 
             // Collect video-only streams
             java.util.stream.Stream.of(
+                    new Pair<>(webRemixStreamingData, webRemixCpn),
                     new Pair<>(safariStreamingData, safariCpn),
                     new Pair<>(androidStreamingData, androidCpn),
                     new Pair<>(tvHtml5SimplyEmbedStreamingData, tvHtml5SimplyEmbedCpn)
@@ -1334,11 +1339,16 @@ public class YoutubeStreamExtractor extends StreamExtractor {
 
         CancellableCall androidCall = null;
         CancellableCall safariCall = null;
+        CancellableCall webRemixCall = null;
 
         if (StringUtils.isBlank(ServiceList.YouTube.getTokens())) {
             androidCall = fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
         } else {
             safariCall = fetchSafariJsonPlayer(contentCountry, localization, videoId);
+            // Also fetch via WEB_REMIX (YouTube Music) client for Premium audio itags
+            // (e.g. itag 141 AAC 256kbps and itag 774 Opus 256kbps), which YouTube
+            // only returns to the music client.
+            webRemixCall = fetchWebRemixJsonPlayer(contentCountry, localization, videoId);
         }
 
         final byte[] body = JsonWriter.string(
@@ -1374,16 +1384,29 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         });
         long startTime = System.nanoTime();
         do {
-            if (((StringUtils.isBlank(ServiceList.YouTube.getTokens()) && androidCall.isFinished())
-                    || (StringUtils.isNotBlank(ServiceList.YouTube.getTokens()) && safariCall.isFinished())) &&
-                    webPageCall.isFinished() && nextDataCall.isFinished()) {
+            final boolean playerCallsFinished;
+            if (StringUtils.isBlank(ServiceList.YouTube.getTokens())) {
+                playerCallsFinished = androidCall.isFinished();
+            } else {
+                playerCallsFinished = safariCall.isFinished()
+                        && (webRemixCall == null || webRemixCall.isFinished());
+            }
+            if (playerCallsFinished
+                    && webPageCall.isFinished()
+                    && nextDataCall.isFinished()) {
                 break;
             }
         } while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime) <= ServiceList.YouTube.getLoadingTimeout());
 
-        if (((StringUtils.isBlank(ServiceList.YouTube.getTokens()) && androidStreamingData == null)
-                || ((StringUtils.isNotBlank(ServiceList.YouTube.getTokens()) && safariStreamingData == null)))
-                || nextResponse == null) {
+        final boolean missingStreamingData;
+        if (StringUtils.isBlank(ServiceList.YouTube.getTokens())) {
+            missingStreamingData = androidStreamingData == null;
+        } else {
+            // Either Safari or WebRemix providing streaming data is enough
+            missingStreamingData = safariStreamingData == null
+                    && webRemixStreamingData == null;
+        }
+        if (missingStreamingData || nextResponse == null) {
             for (Throwable e: errors) {
                 if (e instanceof AntiBotException) {
                     throw (AntiBotException) e;
@@ -1760,6 +1783,59 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         videoId,
                         YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId),
                         safariCpn), localization, callback);
+    }
+
+    /**
+     * Fetch the player response from the WEB_REMIX (YouTube Music) client.
+     *
+     * <p>Required to obtain Premium-tier audio itags such as 141 (AAC 256 kbps)
+     * and 774 (Opus 256 kbps), which are only returned by the music client.</p>
+     */
+    private CancellableCall fetchWebRemixJsonPlayer(@Nonnull final ContentCountry contentCountry,
+                                                    @Nonnull final Localization localization,
+                                                    @Nonnull final String videoId)
+            throws IOException, ExtractionException {
+        webRemixCpn = generateContentPlaybackNonce();
+
+        final Downloader.AsyncCallback callback = new Downloader.AsyncCallback() {
+            @Override
+            public void onSuccess(Response response) {
+                try {
+                    final JsonObject webRemixPlayerResponse =
+                            JsonUtils.toJsonObject(getValidJsonResponseBody(response));
+                    if (isPlayerResponseNotValid(webRemixPlayerResponse, videoId)) {
+                        if (webRemixPlayerResponse.toString().contains("Sign in to confirm")) {
+                            throw new AntiBotException(
+                                    "WebRemix player response is not valid");
+                        }
+                        throw new ExtractionException(
+                                "WebRemix player response is not valid");
+                    }
+
+                    final JsonObject streamingData =
+                            webRemixPlayerResponse.getObject(STREAMING_DATA);
+                    if (!isNullOrEmpty(streamingData)) {
+                        webRemixStreamingData = streamingData;
+                        // Use WEB_REMIX response as fallback playerResponse
+                        // when Safari hasn't populated it yet
+                        if (YoutubeStreamExtractor.this.playerResponse == null) {
+                            YoutubeStreamExtractor.this.playerResponse =
+                                    webRemixPlayerResponse;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    errors.add(e);
+                }
+            }
+        };
+
+        return getWebRemixPostResponseAsync(PLAYER,
+                createWebRemixPlayerBody(localization,
+                        contentCountry,
+                        videoId,
+                        YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId),
+                        webRemixCpn), localization, callback);
     }
 
 

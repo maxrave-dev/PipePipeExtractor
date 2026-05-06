@@ -1495,6 +1495,86 @@ YoutubeParsingHelper {
         return getDownloader().postAsync(YOUTUBEI_V1_URL + endpoint + "?" + DISABLE_PRETTY_PRINT_PARAMETER, headers, body, localization, callback);
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+    // WEB_REMIX (YouTube Music) client — needed for Premium audio itags 141 / 774
+    //////////////////////////////////////////////////////////////////////////*/
+
+    @Nonnull
+    public static JsonBuilder<JsonObject> prepareWebRemixJsonBuilder(
+            @Nonnull final Localization localization,
+            @Nonnull final ContentCountry contentCountry) {
+        return JsonObject.builder()
+                .object("context")
+                    .object("client")
+                        .value("utcOffsetMinutes", 0)
+                        .value("timeZone", "UTC")
+                        .value("hl", localization.getLocalizationCode())
+                        .value("gl", contentCountry.getCountryCode())
+                        .value("clientName", WEB_REMIX_CLIENT_NAME)
+                        .value("clientVersion", WEB_REMIX_HARDCODED_CLIENT_VERSION)
+                    .end()
+                .end();
+    }
+
+    @Nonnull
+    public static byte[] createWebRemixPlayerBody(
+            @Nonnull final Localization localization,
+            @Nonnull final ContentCountry contentCountry,
+            @Nonnull final String videoId,
+            @Nonnull final Integer sts,
+            @Nonnull final String contentPlaybackNonce) {
+        return JsonWriter.string(
+                        prepareWebRemixJsonBuilder(localization, contentCountry)
+                                .object("playbackContext")
+                                    .object("contentPlaybackContext")
+                                        .value("html5Preference", "HTML5_PREF_WANTS")
+                                        .value("signatureTimestamp", sts)
+                                    .end()
+                                .end()
+                                .value(CPN, contentPlaybackNonce)
+                                .value(VIDEO_ID, videoId)
+                                .value(CONTENT_CHECK_OK, true)
+                                .value(RACY_CHECK_OK, true)
+                                .done())
+                .getBytes(StandardCharsets.UTF_8);
+    }
+
+    public static CancellableCall getWebRemixPostResponseAsync(
+            final String endpoint,
+            final byte[] body,
+            final Localization localization,
+            final Downloader.AsyncCallback callback)
+            throws IOException, ExtractionException {
+        final Map<String, List<String>> headers =
+                new HashMap<>(getOriginReferrerHeaders(YOUTUBE_MUSIC_URL));
+        headers.put("Content-Type", singletonList("application/json"));
+        headers.put("X-YouTube-Client-Name", singletonList(WEB_REMIX_CLIENT_ID));
+        headers.put("X-Youtube-Client-Version",
+                singletonList(WEB_REMIX_HARDCODED_CLIENT_VERSION));
+
+        // Inline auth — sign SAPISIDHASH with music.youtube.com origin so server
+        // recognizes Premium entitlement on YouTube Music endpoints.
+        if (ServiceList.YouTube.hasTokens()) {
+            headers.put("Cookie", singletonList(ServiceList.YouTube.getTokens()));
+            try {
+                headers.put("Authorization", singletonList(
+                        getAuthorizationHeader(
+                                ServiceList.YouTube.getTokens(),
+                                YOUTUBE_MUSIC_URL)));
+            } catch (Exception e) {
+                throw new ExtractionException(
+                        "Failed to get authorization header for WEB_REMIX", e);
+            }
+            headers.put("X-Origin", singletonList(YOUTUBE_MUSIC_URL));
+            headers.put("DNT", singletonList("1"));
+        }
+
+        return getDownloader().postAsync(
+                YOUTUBE_MUSIC_URL + "/youtubei/v1/" + endpoint
+                        + "?" + DISABLE_PRETTY_PRINT_PARAMETER,
+                headers, body, localization, callback);
+    }
+
     public static Response getWebPlayerResponseSync(@Nonnull final String videoId)
             throws IOException, ExtractionException {
         Localization localization = new Localization("en");
@@ -2304,8 +2384,11 @@ YoutubeParsingHelper {
     }
 
     public static String getAuthorizationHeader(String cookie) throws NoSuchAlgorithmException {
-        String ytURL = "https://www.youtube.com";
+        return getAuthorizationHeader(cookie, "https://www.youtube.com");
+    }
 
+    public static String getAuthorizationHeader(String cookie, String origin)
+            throws NoSuchAlgorithmException {
         Map<String, String> cookies = parseCookies(cookie);
         String sapisid = cookies.get("SAPISID");
 
@@ -2317,7 +2400,7 @@ YoutubeParsingHelper {
         }
 
         long currentTimestamp = Instant.now().getEpochSecond();
-        String initialData = currentTimestamp + " " + sapisid + " " + ytURL;
+        String initialData = currentTimestamp + " " + sapisid + " " + origin;
         String hash = sha1(initialData);
 
         return "SAPISIDHASH " + currentTimestamp + "_" + hash;
