@@ -2,8 +2,8 @@ import com.grack.nanojson.JsonArray;
 import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
-import org.schabi.newpipe.extractor.timeago.PatternsHolder;
-import org.schabi.newpipe.extractor.timeago.TimeAgoUnit;
+import dev.maxrave.pipepipe.extractor.timeago.PatternsHolder;
+import dev.maxrave.pipepipe.extractor.timeago.TimeAgoUnit;
 
 import java.io.*;
 import java.util.*;
@@ -42,13 +42,13 @@ public class GeneratePatternClasses {
             System.out.println("Generating \"" + languageCode + "\" pattern class...");
 
             try (final FileWriter fileOut = new FileWriter(
-                    "timeago-parser/src/main/java/org/schabi/newpipe/extractor/timeago/patterns/" +
+                    "timeago-parser/src/main/java/dev/maxrave/pipepipe/extractor/timeago/patterns/" +
                             languageCode + ".java")) {
                 final String test = INFO_CLASS_GENERATED + "\n" +
                         "\n" +
-                        "package org.schabi.newpipe.extractor.timeago.patterns;\n\n" +
-                        "import org.schabi.newpipe.extractor.timeago.PatternsHolder;\n" +
-                        (specialCasesString.length() > 0 ? "import org.schabi.newpipe.extractor.timeago.TimeAgoUnit;\n" : "") +
+                        "package dev.maxrave.pipepipe.extractor.timeago.patterns;\n\n" +
+                        "import dev.maxrave.pipepipe.extractor.timeago.PatternsHolder;\n" +
+                        (specialCasesString.length() > 0 ? "import dev.maxrave.pipepipe.extractor.timeago.TimeAgoUnit;\n" : "") +
                         "\n" +
                         "public class " + languageCode + " extends PatternsHolder {\n" +
                         "    private static final String WORD_SEPARATOR = \"" + wordSeparator + "\";\n" +
