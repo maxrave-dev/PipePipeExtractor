@@ -3,7 +3,7 @@ syntax = "proto2";
 package youtubesearchfilter;
 
 option java_multiple_files = true;
-option java_package = "org.schabi.newpipe.extractor.services.youtube.search.filter.protobuf";
+option java_package = "dev.maxrave.pipepipe.extractor.services.youtube.search.filter.protobuf";
 
 enum ExtraFeatures {
     verbatim = 0;

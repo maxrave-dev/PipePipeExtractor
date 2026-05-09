@@ -3,7 +3,7 @@ syntax = "proto3";
 package niconicobulletcomments;
 
 option java_multiple_files = true;
-option java_package = "org.schabi.newpipe.extractor.services.niconico.protobuf";
+option java_package = "dev.maxrave.pipepipe.extractor.services.niconico.protobuf";
 
 message BulletComment {
   repeated MessageItem items = 1;
