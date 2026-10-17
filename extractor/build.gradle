@@ -24,6 +24,10 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.4'
+    // org.json is compileOnly for main (Android provides it built-in), but the
+    // desktop test JVM has no org.json — supply it at test runtime to avoid
+    // NoClassDefFoundError: org/json/JSONException when StreamInfo.getInfo runs.
+    testRuntimeOnly "org.json:json:20231013"
 }
 
 test {
