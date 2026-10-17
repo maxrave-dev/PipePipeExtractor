@@ -10,6 +10,7 @@ import dev.maxrave.pipepipe.extractor.utils.Utils;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import static dev.maxrave.pipepipe.extractor.services.youtube.YoutubeParsingHelper.getChannelIdFromNavigationEndpoint;
 import static dev.maxrave.pipepipe.extractor.services.youtube.YoutubeParsingHelper.getTextFromObject;
 import static dev.maxrave.pipepipe.extractor.services.youtube.YoutubeParsingHelper.getImagesFromThumbnailsArray;
 import static dev.maxrave.pipepipe.extractor.services.youtube.YoutubeParsingHelper.getUrlFromNavigationEndpoint;
@@ -56,6 +57,13 @@ public class YoutubeMusicArtistInfoItemExtractor implements ChannelInfoItemExtra
             return url;
         }
         throw new ParsingException("Could not get URL");
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderId() {
+        return getChannelIdFromNavigationEndpoint(
+                artistInfoItem.getObject("navigationEndpoint"));
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
 
 import dev.maxrave.pipepipe.extractor.Page;
+import dev.maxrave.pipepipe.extractor.ServiceList;
 import dev.maxrave.pipepipe.extractor.StreamingService;
 import dev.maxrave.pipepipe.extractor.downloader.Downloader;
 import dev.maxrave.pipepipe.extractor.exceptions.ExtractionException;
@@ -53,6 +54,9 @@ public class NiconicoPlaylistExtractor extends PlaylistExtractor {
                 = new StreamInfoItemsCollector(getServiceId());
         for (int i = 0; i< items.size(); i++) {
             collector.commit(new NiconicoPlaylistContentItemExtractor(items.getObject(i)));
+        }
+        if (ServiceList.NicoNico.getFilterTypes().contains("playlists")) {
+            collector.applyBlocking(ServiceList.NicoNico.getFilterConfig());
         }
         return collector;
     }

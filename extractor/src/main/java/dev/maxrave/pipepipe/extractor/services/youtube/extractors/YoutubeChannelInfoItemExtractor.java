@@ -10,6 +10,8 @@ import dev.maxrave.pipepipe.extractor.services.youtube.YoutubeParsingHelper;
 import dev.maxrave.pipepipe.extractor.services.youtube.linkHandler.YoutubeChannelLinkHandlerFactory;
 import dev.maxrave.pipepipe.extractor.utils.Utils;
 
+import javax.annotation.Nullable;
+
 import static dev.maxrave.pipepipe.extractor.services.youtube.YoutubeParsingHelper.fixThumbnailUrl;
 import static dev.maxrave.pipepipe.extractor.services.youtube.YoutubeParsingHelper.getTextFromObject;
 
@@ -140,6 +142,12 @@ public class YoutubeChannelInfoItemExtractor implements ChannelInfoItemExtractor
     @Override
     public boolean isVerified() throws ParsingException {
         return YoutubeParsingHelper.isVerified(channelInfoItem.getArray("ownerBadges"));
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderId() {
+        return channelInfoItem.getString("channelId");
     }
 
     @Override

@@ -4,6 +4,7 @@ import dev.maxrave.pipepipe.extractor.Image;
 import dev.maxrave.pipepipe.extractor.InfoItem;
 import dev.maxrave.pipepipe.extractor.Page;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
+import dev.maxrave.pipepipe.extractor.stream.Description;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,10 +15,11 @@ import javax.annotation.Nullable;
 public class CommentsInfoItem extends InfoItem {
 
     private String commentId;
-    private String commentText;
+    private Description commentText = Description.EMPTY_DESCRIPTION;
     private String uploaderName;
     private String uploaderAvatarUrl;
     private String uploaderUrl;
+    private String uploaderId;
     private boolean uploaderVerified;
     private String textualUploadDate;
     @Nullable
@@ -50,12 +52,14 @@ public class CommentsInfoItem extends InfoItem {
         this.commentId = commentId;
     }
 
-    public String getCommentText() {
+    public Description getCommentText() {
         return commentText;
     }
 
-    public void setCommentText(final String commentText) {
-        this.commentText = commentText;
+    public void setCommentText(final Description commentText) {
+        if (commentText != null) {
+            this.commentText = commentText;
+        }
     }
 
     public String getUploaderName() {
@@ -72,6 +76,15 @@ public class CommentsInfoItem extends InfoItem {
 
     public void setUploaderAvatarUrl(final String uploaderAvatarUrl) {
         this.uploaderAvatarUrl = uploaderAvatarUrl;
+    }
+
+    @Nullable
+    public String getUploaderId() {
+        return uploaderId;
+    }
+
+    public void setUploaderId(@Nullable final String uploaderId) {
+        this.uploaderId = uploaderId;
     }
 
     public String getUploaderUrl() {

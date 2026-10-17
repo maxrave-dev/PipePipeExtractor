@@ -4,6 +4,7 @@ import com.grack.nanojson.JsonObject;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.playlist.PlaylistInfo;
 import dev.maxrave.pipepipe.extractor.playlist.PlaylistInfoItemExtractor;
+import dev.maxrave.pipepipe.extractor.services.peertube.PeertubeParsingHelper;
 import dev.maxrave.pipepipe.extractor.utils.JsonUtils;
 
 import javax.annotation.Nonnull;
@@ -25,8 +26,9 @@ public class PeertubePlaylistInfoItemExtractor implements PlaylistInfoItemExtrac
     }
 
     @Override
-    public String getThumbnailUrl() throws ParsingException {
-        return baseUrl + JsonUtils.getString(item, "thumbnailPath");
+    public String getThumbnailUrl() {
+        return PeertubeParsingHelper.getFirstImageUrl(
+                PeertubeParsingHelper.getThumbnailsFromPlaylistOrVideoItem(baseUrl, item));
     }
 
     @Override

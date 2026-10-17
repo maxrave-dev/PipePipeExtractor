@@ -5,6 +5,9 @@ import com.grack.nanojson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.playlist.PlaylistInfoItemExtractor;
+import dev.maxrave.pipepipe.extractor.services.niconico.NiconicoService;
+
+import javax.annotation.Nullable;
 
 public class NiconicoPlaylistInfoItemExtractor implements PlaylistInfoItemExtractor {
     private final JsonObject itemObject;
@@ -31,6 +34,19 @@ public class NiconicoPlaylistInfoItemExtractor implements PlaylistInfoItemExtrac
     @Override
     public String getUploaderName() throws ParsingException {
         return itemObject.getObject("owner").getString("name");
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderId() {
+        return itemObject.getObject("owner").getString("id");
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderUrl() {
+        final String id = itemObject.getObject("owner").getString("id", "");
+        return id.isEmpty() ? null : NiconicoService.USER_URL + id;
     }
 
     @Override

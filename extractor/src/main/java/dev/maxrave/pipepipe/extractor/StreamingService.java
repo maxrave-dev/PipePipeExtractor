@@ -7,6 +7,7 @@ import dev.maxrave.pipepipe.extractor.search.filter.FilterItem;
 import dev.maxrave.pipepipe.extractor.channel.ChannelExtractor;
 import dev.maxrave.pipepipe.extractor.channel.ChannelTabExtractor;
 import dev.maxrave.pipepipe.extractor.comments.CommentsExtractor;
+import dev.maxrave.pipepipe.extractor.comments.CommentsFilterConfig;
 import dev.maxrave.pipepipe.extractor.exceptions.ExtractionException;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.feed.FeedExtractor;
@@ -109,12 +110,13 @@ public abstract class StreamingService {
 
     public Set<String> filterTypes = new HashSet<>();
     public InfoItemsCollector.FilterConfig filterConfig = null;
+    private CommentsFilterConfig commentsFilterConfig = null;
 
     public SponsorBlockApiSettings sponsorBlockApiSettings = null;
     
     private int loadingTimeout = 5;
     private boolean fetchFullPlaylist = false;
-    private boolean fetchDislike = true;
+    private boolean fetchDislike = false;
     private long feedFetchInterval = 0;
 
 
@@ -570,6 +572,15 @@ public abstract class StreamingService {
 
     public void setFilterConfig(InfoItemsCollector.FilterConfig filterConfig) {
         this.filterConfig = filterConfig;
+    }
+
+    @Nullable
+    public CommentsFilterConfig getCommentsFilterConfig() {
+        return commentsFilterConfig;
+    }
+
+    public void setCommentsFilterConfig(@Nullable final CommentsFilterConfig commentsFilterConfig) {
+        this.commentsFilterConfig = commentsFilterConfig;
     }
 
     public String getProxyToken() {

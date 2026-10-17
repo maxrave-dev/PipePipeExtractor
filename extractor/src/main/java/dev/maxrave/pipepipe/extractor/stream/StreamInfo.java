@@ -487,6 +487,11 @@ public class StreamInfo extends Info {
             streamInfo.addError(e);
         }
         try {
+            streamInfo.setSupportBulletComments(extractor.isSupportBulletComments());
+        } catch (final Exception e) {
+            streamInfo.addError(e);
+        }
+        try {
             streamInfo.setSupportRelatedItems(extractor.isSupportRelatedItems());
         } catch (final Exception e) {
             streamInfo.addError(e);
@@ -584,6 +589,7 @@ public class StreamInfo extends Info {
     private List<StreamSegment> streamSegments = new ArrayList<>();
     private List<MetaInfo> metaInfo = new ArrayList<>();
     private boolean supportComments;
+    private boolean supportBulletComments = true;
     private boolean supportRelatedItems;
     private boolean isRoundPlayStream;
     private long startAt = -1;
@@ -982,6 +988,14 @@ public class StreamInfo extends Info {
 
     public void setSupportComments(boolean supportComments) {
         this.supportComments = supportComments;
+    }
+
+    public boolean isSupportBulletComments() {
+        return supportBulletComments;
+    }
+
+    public void setSupportBulletComments(boolean supportBulletComments) {
+        this.supportBulletComments = supportBulletComments;
     }
 
     public boolean isSupportRelatedItems() {

@@ -1,5 +1,7 @@
 package dev.maxrave.pipepipe.extractor.services.bilibili.extractors;
 
+import dev.maxrave.pipepipe.extractor.services.bilibili.linkHandler.BilibiliChannelLinkHandlerFactory;
+import javax.annotation.Nullable;
 import com.grack.nanojson.JsonObject;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
@@ -61,6 +63,19 @@ public class BilibiliChannelInfoItemWebAPIExtractor implements StreamInfoItemExt
         return Optional.of(item.getLong("play"))
                 .filter(playCount -> playCount > 0)
                 .orElseGet(() -> item.getObject("stat").getLong("view"));
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderId() throws ParsingException {
+        final long mid = item.getLong("mid", -1);
+        return mid > 0 ? String.valueOf(mid) : null;
+    }
+
+    @Override
+    public String getUploaderUrl() throws ParsingException {
+        final String id = getUploaderId();
+        return id == null ? "" : BilibiliChannelLinkHandlerFactory.baseUrl + id;
     }
 
     @Override

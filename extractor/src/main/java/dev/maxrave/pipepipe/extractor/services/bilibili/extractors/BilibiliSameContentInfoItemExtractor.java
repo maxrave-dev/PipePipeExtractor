@@ -2,6 +2,7 @@ package dev.maxrave.pipepipe.extractor.services.bilibili.extractors;
 
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
+import dev.maxrave.pipepipe.extractor.services.bilibili.linkHandler.BilibiliChannelLinkHandlerFactory;
 import dev.maxrave.pipepipe.extractor.stream.StreamInfoItemExtractor;
 import dev.maxrave.pipepipe.extractor.stream.StreamType;
 
@@ -12,13 +13,15 @@ public class BilibiliSameContentInfoItemExtractor implements StreamInfoItemExtra
     private final String url;
     private final String thumbnailUrl;
     private final String uploaderName;
+    private final String uploaderId;
     private final long viewCount;
 
-    public BilibiliSameContentInfoItemExtractor(String name, String url, String thumbnailUrl, String uploaderName, long viewCount) {
+    public BilibiliSameContentInfoItemExtractor(String name, String url, String thumbnailUrl, String uploaderName, String uploaderId, long viewCount) {
         this.name = name;
         this.url = url;
         this.thumbnailUrl = thumbnailUrl;
         this.uploaderName = uploaderName;
+        this.uploaderId = uploaderId;
         this.viewCount = viewCount;
     }
 
@@ -40,6 +43,17 @@ public class BilibiliSameContentInfoItemExtractor implements StreamInfoItemExtra
     @Override
     public long getViewCount() throws ParsingException {
         return viewCount;
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderId() throws ParsingException {
+        return uploaderId;
+    }
+
+    @Override
+    public String getUploaderUrl() throws ParsingException {
+        return uploaderId == null ? "" : BilibiliChannelLinkHandlerFactory.baseUrl + uploaderId;
     }
 
     @Override

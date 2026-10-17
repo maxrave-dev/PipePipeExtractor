@@ -39,6 +39,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPInputStream;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,6 +47,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -224,9 +226,16 @@ public class NiconicoStreamExtractor extends StreamExtractor {
         ArrayList<String> audios = (ArrayList<String>) streamSources.get("audio");
         for (String audio : audios) {
             String id = RegexUtils.extract(audio, "audio-(.*?)-\\d+kbps");
+            final String kbps = id.split("-")[2].split("kbps")[0];
+            int averageBitrate = -1;
+            try {
+                averageBitrate = Integer.parseInt(kbps);
+            } catch (final NumberFormatException ignored) {
+            }
             audioStreams.add(new AudioStream.Builder().setId("Niconico-" + getId() + "-audio")
                     .setContent(audio, true)
-                    .setMediaFormat(MediaFormat.M4A).setQuality(id.split("-")[2].split("kbps")[0]).build());
+                    .setMediaFormat(MediaFormat.M4A).setQuality(kbps)
+                    .setAverageBitrate(averageBitrate).build());
         }
         return audioStreams;
     }
@@ -345,26 +354,49 @@ public class NiconicoStreamExtractor extends StreamExtractor {
         final StreamInfoItemsCollector collector = new StreamInfoItemsCollector(
                 getServiceId());
         if (getStreamType() == StreamType.LIVE_STREAM) {
-            String url =
-                    "https://live.nicovideo.jp/front/api/v1/recommend-contents" +
-                            "?recipe=live_watch_related_contents_user&v=1&site=nicolive&content_meta=true&frontend_id=9&tags=&user_id=";
-            String uploaderUrl = getUploaderUrl();
-            if (uploaderUrl == null || uploaderUrl.contains("/ch")) {
-                url = url.replace("live_watch_related_contents_user", "live_watch_related_contents_channel").replace("user_id", "channel_id");
-                url += liveDataRoot.getObject("socialGroup").getString("id");
-            } else {
-                url += uploaderUrl.split("user/")[1];
+            final StringJoiner tags = new StringJoiner(",");
+            for (final Object tagObject : liveData.getObject("tag").getArray("list")) {
+                if (tagObject instanceof JsonObject) {
+                    tags.add(((JsonObject) tagObject).getString("text", ""));
+                }
             }
+
+            final boolean isChannel = liveData.getObject("supplier")
+                    .getString("supplierType", "").equals("channel");
+            final String recipe = isChannel
+                    ? "live_watch_related_contents_channel"
+                    : "live_watch_related_contents_user";
+            final String recipeVersion = isChannel ? "1" : "2";
+            final String providerParameter = isChannel
+                    ? "channel_id=" + liveDataRoot.getObject("socialGroup").getString("id", "")
+                    : "broadcaster_id=" + liveData.getObject("supplier")
+                            .getString("programProviderId", "");
+            final String url = "https://live.nicovideo.jp/front/api/v2/recommend-contents"
+                    + "?recipe=" + recipe
+                    + "&v=" + recipeVersion
+                    + "&site=nicolive&content_meta=true&frontend_id=9&tags="
+                    + URLEncoder.encode(tags.toString(), StandardCharsets.UTF_8.name())
+                    + "&" + providerParameter;
+            final String uploaderUrl = getUploaderUrl();
+            final Response response = getDownloader().get(url);
+            if (response.responseCode() / 100 != 2) {
+                return collector;
+            }
+
             try {
-                JsonArray data = JsonParser.object().from(getDownloader().get(url).responseBody()).getObject("data").getArray("values");
+                final JsonArray data = JsonParser.object().from(response.responseBody())
+                        .getObject("data").getArray("values");
                 for (int i = 0; i < data.size(); i++) {
                     collector.commit(new NiconicoLiveRecommendVideoExtractor(
                             data.getObject(i), uploaderUrl, getUploaderName()));
                 }
+            } catch (final JsonParserException e) {
                 return collector;
-            } catch (JsonParserException e) {
-                throw new RuntimeException(e);
             }
+            if (ServiceList.NicoNico.getFilterTypes().contains("related_item")) {
+                collector.applyBlocking(ServiceList.NicoNico.getFilterConfig());
+            }
+            return collector;
         }
         final String url = NiconicoService.RELATED_ITEMS_URL + getId();
         try {

@@ -4,6 +4,7 @@ import com.grack.nanojson.JsonObject;
 import dev.maxrave.pipepipe.extractor.ListExtractor;
 import dev.maxrave.pipepipe.extractor.channel.ChannelInfoItemExtractor;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
+import dev.maxrave.pipepipe.extractor.services.peertube.PeertubeParsingHelper;
 import dev.maxrave.pipepipe.extractor.utils.JsonUtils;
 
 public class PeertubeChannelInfoItemExtractor implements ChannelInfoItemExtractor {
@@ -22,9 +23,10 @@ public class PeertubeChannelInfoItemExtractor implements ChannelInfoItemExtracto
     }
 
     @Override
-    public String getThumbnailUrl() throws ParsingException {
-        final JsonObject avatar = JsonUtils.getObject(item, "avatar");
-        return baseUrl + JsonUtils.getString(avatar, "path");
+    public String getThumbnailUrl() {
+        return PeertubeParsingHelper.getBiggestImageUrl(
+                PeertubeParsingHelper.getAvatarsFromOwnerAccountOrVideoChannelObject(
+                        baseUrl, item));
     }
 
     @Override

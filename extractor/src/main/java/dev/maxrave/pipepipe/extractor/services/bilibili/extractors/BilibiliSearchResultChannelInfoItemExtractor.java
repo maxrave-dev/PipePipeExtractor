@@ -6,6 +6,8 @@ import dev.maxrave.pipepipe.extractor.channel.ChannelInfoItemExtractor;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.services.bilibili.linkHandler.BilibiliChannelLinkHandlerFactory;
 
+import javax.annotation.Nullable;
+
 public class BilibiliSearchResultChannelInfoItemExtractor implements ChannelInfoItemExtractor {
     JsonObject data;
 
@@ -26,6 +28,13 @@ public class BilibiliSearchResultChannelInfoItemExtractor implements ChannelInfo
     @Override
     public String getThumbnailUrl() throws ParsingException {
         return "https:" + data.getString("upic");
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderId() {
+        final long mid = data.getLong("mid", -1);
+        return mid > 0 ? String.valueOf(mid) : null;
     }
 
     @Override

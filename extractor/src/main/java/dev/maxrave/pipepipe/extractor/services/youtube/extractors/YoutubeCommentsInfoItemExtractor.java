@@ -9,7 +9,6 @@ import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
 import dev.maxrave.pipepipe.extractor.localization.TimeAgoParser;
 import dev.maxrave.pipepipe.extractor.stream.Description;
-import dev.maxrave.pipepipe.extractor.utils.HtmlParser;
 import dev.maxrave.pipepipe.extractor.utils.JsonUtils;
 import dev.maxrave.pipepipe.extractor.utils.Utils;
 
@@ -176,20 +175,20 @@ public class YoutubeCommentsInfoItemExtractor implements CommentsInfoItemExtract
     }
 
     @Override
-    public String getCommentText() throws ParsingException {
+    public Description getCommentText() throws ParsingException {
         try {
             final JsonObject contentText = JsonUtils.getObject(commentRenderer, "contentText");
             if (contentText.isEmpty()) {
                 // completely empty comments as described in
                 // https://github.com/TeamNewPipe/NewPipeExtractor/issues/380#issuecomment-668808584
-                return "";
+                return Description.EMPTY_DESCRIPTION;
             }
             final String commentText = getTextFromObject(contentText, true);
             // YouTube adds U+FEFF in some comments.
             // eg. https://www.youtube.com/watch?v=Nj4F63E59io<feff>
             final String commentTextBomRemoved = Utils.removeUTF8BOM(commentText);
 
-            return HtmlParser.htmlToString(commentTextBomRemoved);
+            return new Description(commentTextBomRemoved, Description.HTML);
         } catch (final Exception e) {
             throw new ParsingException("Could not get comment text", e);
         }
@@ -233,6 +232,16 @@ public class YoutubeCommentsInfoItemExtractor implements CommentsInfoItemExtract
             return getTextFromObject(JsonUtils.getObject(commentRenderer, "authorText"));
         } catch (final Exception e) {
             return "";
+        }
+    }
+
+    @Override
+    public String getUploaderId() throws ParsingException {
+        try {
+            return JsonUtils.getString(commentRenderer,
+                    "authorEndpoint.browseEndpoint.browseId");
+        } catch (final Exception e) {
+            return null;
         }
     }
 

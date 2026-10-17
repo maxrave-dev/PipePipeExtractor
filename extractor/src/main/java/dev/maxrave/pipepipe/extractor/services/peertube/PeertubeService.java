@@ -25,6 +25,7 @@ import dev.maxrave.pipepipe.extractor.search.SearchExtractor;
 import dev.maxrave.pipepipe.extractor.services.peertube.extractors.PeertubeAccountExtractor;
 import dev.maxrave.pipepipe.extractor.services.peertube.extractors.PeertubeAccountTabExtractor;
 import dev.maxrave.pipepipe.extractor.services.peertube.extractors.PeertubeChannelExtractor;
+import dev.maxrave.pipepipe.extractor.services.peertube.extractors.PeertubeChannelSearchExtractor;
 import dev.maxrave.pipepipe.extractor.services.peertube.extractors.PeertubeChannelTabExtractor;
 import dev.maxrave.pipepipe.extractor.services.peertube.extractors.PeertubeCommentsExtractor;
 import dev.maxrave.pipepipe.extractor.services.peertube.extractors.PeertubePlaylistExtractor;
@@ -125,8 +126,11 @@ public class PeertubeService extends StreamingService {
         switch (tab) {
             case ChannelTabs.CHANNELS:
                 return new PeertubeAccountTabExtractor(this, linkHandler);
+            case ChannelTabs.VIDEOS:
             case ChannelTabs.PLAYLISTS:
                 return new PeertubeChannelTabExtractor(this, linkHandler);
+            case ChannelTabs.SEARCH:
+                return new PeertubeChannelSearchExtractor(this, linkHandler);
         }
         throw new ParsingException("tab " + tab + " not supported");
     }

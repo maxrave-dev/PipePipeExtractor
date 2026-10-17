@@ -6,6 +6,7 @@ import dev.maxrave.pipepipe.extractor.Page;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
 import dev.maxrave.pipepipe.extractor.services.youtube.extractors.YoutubeCommentsInfoItemExtractor;
+import dev.maxrave.pipepipe.extractor.stream.Description;
 import dev.maxrave.pipepipe.extractor.stream.StreamExtractor;
 import dev.maxrave.pipepipe.extractor.utils.Utils;
 
@@ -47,8 +48,8 @@ public interface CommentsInfoItemExtractor extends InfoItemExtractor {
     /**
      * The text of the comment
      */
-    default String getCommentText() throws ParsingException {
-        return Utils.EMPTY_STRING;
+    default Description getCommentText() throws ParsingException {
+        return Description.EMPTY_DESCRIPTION;
     }
 
     /**
@@ -76,6 +77,14 @@ public interface CommentsInfoItemExtractor extends InfoItemExtractor {
 
     default String getUploaderUrl() throws ParsingException {
         return Utils.EMPTY_STRING;
+    }
+
+    /**
+     * The service-specific id of the commenter's channel (e.g. UCxxxx on YouTube)
+     */
+    @Nullable
+    default String getUploaderId() throws ParsingException {
+        return null;
     }
 
     default String getUploaderName() throws ParsingException {

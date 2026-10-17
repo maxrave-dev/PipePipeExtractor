@@ -6,6 +6,7 @@ import dev.maxrave.pipepipe.extractor.Page;
 import dev.maxrave.pipepipe.extractor.comments.CommentsInfoItemExtractor;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
+import dev.maxrave.pipepipe.extractor.stream.Description;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -51,12 +52,12 @@ public class NiconicoCommentsInfoItemExtractor implements CommentsInfoItemExtrac
     }
 
     @Override
-    public String getCommentText() throws ParsingException {
+    public Description getCommentText() throws ParsingException {
         final Duration diff = getDuration();
         @SuppressWarnings("DefaultLocale") final String hms = String.format("%02d:%02d",
                 diff.toMinutes(),
                 diff.getSeconds() % 60);
-        return hms + " " + getCommentTextRaw();
+        return new Description(hms + " " + getCommentTextRaw(), Description.PLAIN_TEXT);
     }
 
     @Override
@@ -73,6 +74,13 @@ public class NiconicoCommentsInfoItemExtractor implements CommentsInfoItemExtrac
     @Override
     public String getUploaderUrl() throws ParsingException {
         return null;
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderId() throws ParsingException {
+        final String userId = json.getString("userId");
+        return userId == null || userId.isEmpty() ? null : userId;
     }
 
     @Override

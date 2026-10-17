@@ -8,6 +8,7 @@ import dev.maxrave.pipepipe.extractor.comments.CommentsInfoItemExtractor;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
 import dev.maxrave.pipepipe.extractor.services.peertube.PeertubeParsingHelper;
+import dev.maxrave.pipepipe.extractor.stream.Description;
 import dev.maxrave.pipepipe.extractor.utils.JsonUtils;
 
 import java.util.Objects;
@@ -34,13 +35,9 @@ public class PeertubeCommentsInfoItemExtractor implements CommentsInfoItemExtrac
 
     @Override
     public String getThumbnailUrl() {
-        String value;
-        try {
-            value = JsonUtils.getString(item, "account.avatar.path");
-        } catch (final Exception e) {
-            value = "/client/assets/images/default-avatar.png";
-        }
-        return baseUrl + value;
+        return PeertubeParsingHelper.getBiggestImageUrl(
+                PeertubeParsingHelper.getAvatarsFromOwnerAccountOrVideoChannelObject(
+                        baseUrl, item.getObject("account")));
     }
 
     @Override
@@ -60,13 +57,14 @@ public class PeertubeCommentsInfoItemExtractor implements CommentsInfoItemExtrac
     }
 
     @Override
-    public String getCommentText() throws ParsingException {
+    public Description getCommentText() throws ParsingException {
         final String htmlText = JsonUtils.getString(item, "text");
         try {
             final Document doc = Jsoup.parse(htmlText);
-            return doc.body().text();
+            return new Description(doc.body().text(), Description.PLAIN_TEXT);
         } catch (final Exception e) {
-            return htmlText.replaceAll("(?s)<[^>]*>(\\s*<[^>]*>)*", EMPTY_STRING);
+            return new Description(htmlText.replaceAll("(?s)<[^>]*>(\\s*<[^>]*>)*", EMPTY_STRING),
+                    Description.PLAIN_TEXT);
         }
     }
 
@@ -77,13 +75,9 @@ public class PeertubeCommentsInfoItemExtractor implements CommentsInfoItemExtrac
 
     @Override
     public String getUploaderAvatarUrl() {
-        String value;
-        try {
-            value = JsonUtils.getString(item, "account.avatar.path");
-        } catch (final Exception e) {
-            value = "/client/assets/images/default-avatar.png";
-        }
-        return baseUrl + value;
+        return PeertubeParsingHelper.getBiggestImageUrl(
+                PeertubeParsingHelper.getAvatarsFromOwnerAccountOrVideoChannelObject(
+                        baseUrl, item.getObject("account")));
     }
 
     @Override

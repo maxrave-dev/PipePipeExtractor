@@ -5,6 +5,7 @@ import dev.maxrave.pipepipe.extractor.comments.CommentsInfoItemExtractor;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
 import dev.maxrave.pipepipe.extractor.services.soundcloud.SoundcloudParsingHelper;
+import dev.maxrave.pipepipe.extractor.stream.Description;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -24,8 +25,8 @@ public class SoundcloudCommentsInfoItemExtractor implements CommentsInfoItemExtr
     }
 
     @Override
-    public String getCommentText() {
-        return json.getString("body");
+    public Description getCommentText() {
+        return new Description(json.getString("body"), Description.PLAIN_TEXT);
     }
 
     @Override

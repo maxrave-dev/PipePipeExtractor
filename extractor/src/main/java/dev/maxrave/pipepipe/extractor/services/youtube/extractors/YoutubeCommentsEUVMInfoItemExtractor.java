@@ -8,7 +8,6 @@ import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
 import dev.maxrave.pipepipe.extractor.localization.TimeAgoParser;
 import dev.maxrave.pipepipe.extractor.stream.Description;
-import dev.maxrave.pipepipe.extractor.utils.HtmlParser;
 import dev.maxrave.pipepipe.extractor.utils.Utils;
 
 import javax.annotation.Nonnull;
@@ -92,11 +91,11 @@ class YoutubeCommentsEUVMInfoItemExtractor implements CommentsInfoItemExtractor 
     }
 
     @Override
-    public String getCommentText() throws ParsingException {
+    public Description getCommentText() throws ParsingException {
         // Comments' text work in the same way as an attributed video description
-        return HtmlParser.htmlToString(new Description(
+        return new Description(
                 attributedDescriptionToHtml(commentEntityPayload.getObject(PROPERTIES)
-                        .getObject("content")), Description.HTML).getContent());
+                        .getObject("content")), Description.HTML);
     }
 
     @Override
@@ -130,7 +129,16 @@ class YoutubeCommentsEUVMInfoItemExtractor implements CommentsInfoItemExtractor 
     }
 
     @Override
+    public String getUploaderId() throws ParsingException {
+        return getChannelId();
+    }
+
+    @Override
     public String getUploaderUrl() throws ParsingException {
+        return "https://www.youtube.com/channel/" + getChannelId();
+    }
+
+    private String getChannelId() throws ParsingException {
         final JsonObject author = commentEntityPayload.getObject(AUTHOR);
         String channelId = author.getString("channelId");
         if (isNullOrEmpty(channelId)) {
@@ -149,7 +157,7 @@ class YoutubeCommentsEUVMInfoItemExtractor implements CommentsInfoItemExtractor 
                 }
             }
         }
-        return "https://www.youtube.com/channel/" + channelId;
+        return channelId;
     }
 
     @Override

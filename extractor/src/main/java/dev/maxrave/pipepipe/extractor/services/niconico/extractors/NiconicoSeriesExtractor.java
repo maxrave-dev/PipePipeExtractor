@@ -9,6 +9,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import dev.maxrave.pipepipe.extractor.Page;
+import dev.maxrave.pipepipe.extractor.ServiceList;
 import dev.maxrave.pipepipe.extractor.StreamingService;
 import dev.maxrave.pipepipe.extractor.downloader.Downloader;
 import dev.maxrave.pipepipe.extractor.exceptions.ExtractionException;
@@ -69,6 +70,10 @@ public class NiconicoSeriesExtractor extends PlaylistExtractor {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+
+        if (ServiceList.NicoNico.getFilterTypes().contains("playlists")) {
+            collector.applyBlocking(ServiceList.NicoNico.getFilterConfig());
         }
 
         return new InfoItemsPage<>(collector, null);

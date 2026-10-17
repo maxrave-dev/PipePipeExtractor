@@ -3,6 +3,7 @@ package dev.maxrave.pipepipe.extractor.services.youtube.extractors;
 import org.jsoup.nodes.Element;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
 import dev.maxrave.pipepipe.extractor.localization.DateWrapper;
+import dev.maxrave.pipepipe.extractor.services.youtube.YoutubeParsingHelper;
 import dev.maxrave.pipepipe.extractor.stream.StreamInfoItemExtractor;
 import dev.maxrave.pipepipe.extractor.stream.StreamType;
 
@@ -39,6 +40,16 @@ public class YoutubeFeedInfoItemExtractor implements StreamInfoItemExtractor {
     public long getViewCount() {
         return Long.parseLong(entryElement.getElementsByTag("media:statistics").first()
                 .attr("views"));
+    }
+
+    @Nullable
+    @Override
+    public String getUploaderId() {
+        final Element channelIdElement = entryElement.getElementsByTag("yt:channelId").first();
+        if (channelIdElement != null && !channelIdElement.text().isEmpty()) {
+            return channelIdElement.text();
+        }
+        return YoutubeParsingHelper.getChannelIdFromUrl(getUploaderUrl());
     }
 
     @Override

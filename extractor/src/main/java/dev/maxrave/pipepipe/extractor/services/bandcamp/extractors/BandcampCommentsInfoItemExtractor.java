@@ -3,6 +3,7 @@ package dev.maxrave.pipepipe.extractor.services.bandcamp.extractors;
 import org.jsoup.nodes.Element;
 import dev.maxrave.pipepipe.extractor.comments.CommentsInfoItemExtractor;
 import dev.maxrave.pipepipe.extractor.exceptions.ParsingException;
+import dev.maxrave.pipepipe.extractor.stream.Description;
 
 import java.util.Objects;
 
@@ -18,7 +19,7 @@ public class BandcampCommentsInfoItemExtractor implements CommentsInfoItemExtrac
 
     @Override
     public String getName() throws ParsingException {
-        return getCommentText();
+        return getCommentText().getContent();
     }
 
     @Override
@@ -32,12 +33,13 @@ public class BandcampCommentsInfoItemExtractor implements CommentsInfoItemExtrac
     }
 
     @Override
-    public String getCommentText() throws ParsingException {
-        return writing.getElementsByClass("text").stream()
+    public Description getCommentText() throws ParsingException {
+        return new Description(writing.getElementsByClass("text").stream()
                 .filter(Objects::nonNull)
                 .map(Element::ownText)
                 .findFirst()
-                .orElseThrow(() -> new ParsingException("Could not get comment text"));
+                .orElseThrow(() -> new ParsingException("Could not get comment text")),
+                Description.PLAIN_TEXT);
     }
 
     @Override
